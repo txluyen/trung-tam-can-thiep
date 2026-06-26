@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { Student } from '@/types/database'
 
@@ -13,8 +12,13 @@ interface Props {
   onSuccess: () => void
 }
 
+const enrollmentOptions = [
+  { value: 'banTru', label: 'Bán trú' },
+  { value: 'canThiep', label: 'Can thiệp' },
+  { value: 'both', label: 'Bán trú + Can thiệp' },
+]
+
 export function StudentForm({ student, onSuccess }: Props) {
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     full_name: student?.full_name ?? '',
@@ -30,6 +34,7 @@ export function StudentForm({ student, onSuccess }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    const supabase = createClient()
     const data = {
       full_name: form.full_name,
       date_of_birth: form.date_of_birth || null,
@@ -53,66 +58,138 @@ export function StudentForm({ student, onSuccess }: Props) {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [key]: e.target.value }))
 
+  const inputClass = "mt-1.5 w-full rounded-[12px] border-[1.5px] border-[#DEDEE2] px-3 py-2.5 text-sm text-ink-900 bg-white focus:outline-none focus:border-sky-400 transition-colors"
+  const labelClass = "block text-sm font-semibold text-ink-700"
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label className="text-ink-900 font-semibold text-sm">Họ tên *</Label>
-        <Input value={form.full_name} onChange={set('full_name')} required
-          className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
-      </div>
-      <div>
-        <Label className="text-ink-900 font-semibold text-sm">Ngày sinh</Label>
-        <Input type="date" value={form.date_of_birth} onChange={set('date_of_birth')}
-          className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
-      </div>
-      <div>
-        <Label className="text-ink-900 font-semibold text-sm">Loại hình *</Label>
-        <Select value={form.enrollment_type}
-          onValueChange={v => setForm(f => ({ ...f, enrollment_type: v }))}>
-          <SelectTrigger className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="banTru">Bán trú</SelectItem>
-            <SelectItem value="canThiep">Can thiệp</SelectItem>
-            <SelectItem value="both">Cả hai</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
+
+      {/* Thông tin học sinh */}
+      <div className="space-y-4">
+        <p className="text-xs font-bold uppercase tracking-widest text-ink-400">Học sinh</p>
+
         <div>
-          <Label className="text-ink-900 font-semibold text-sm">Phụ huynh</Label>
-          <Input value={form.parent_name} onChange={set('parent_name')}
-            className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
+          <label className={labelClass}>Họ và tên <span className="text-coral-500">*</span></label>
+          <input
+            value={form.full_name}
+            onChange={set('full_name')}
+            required
+            placeholder="Nguyễn Văn A"
+            className={inputClass}
+          />
         </div>
+
         <div>
-          <Label className="text-ink-900 font-semibold text-sm">SĐT phụ huynh</Label>
-          <Input value={form.parent_phone} onChange={set('parent_phone')}
-            className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
+          <label className={labelClass}>Ngày sinh</label>
+          <input
+            type="date"
+            value={form.date_of_birth}
+            onChange={set('date_of_birth')}
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Loại hình <span className="text-coral-500">*</span></label>
+          <div className="mt-1.5 flex gap-2">
+            {enrollmentOptions.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setForm(f => ({ ...f, enrollment_type: opt.value }))}
+                className={`flex-1 py-2 px-2 rounded-[12px] text-sm font-semibold border-[1.5px] transition-all ${
+                  form.enrollment_type === opt.value
+                    ? opt.value === 'banTru'
+                      ? 'bg-pastel-blue border-sky-400 text-sky-700'
+                      : opt.value === 'canThiep'
+                      ? 'bg-pastel-blush border-coral-300 text-coral-700'
+                      : 'bg-pastel-mint border-sky-300 text-sky-700'
+                    : 'bg-white border-[#DEDEE2] text-ink-400 hover:border-sky-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="text-ink-900 font-semibold text-sm">Học phí bán trú/tháng</Label>
-          <p className="text-xs text-ink-400 mb-1">Để trống = dùng mặc định</p>
-          <Input type="number" value={form.banTru_monthly_fee} onChange={set('banTru_monthly_fee')}
-            className="rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
-        </div>
-        <div>
-          <Label className="text-ink-900 font-semibold text-sm">Học phí CT/buổi</Label>
-          <p className="text-xs text-ink-400 mb-1">Để trống = dùng mặc định</p>
-          <Input type="number" value={form.canThiep_fee_per_session} onChange={set('canThiep_fee_per_session')}
-            className="rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
+
+      <hr className="border-line" />
+
+      {/* Phụ huynh */}
+      <div className="space-y-4">
+        <p className="text-xs font-bold uppercase tracking-widest text-ink-400">Phụ huynh</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>Họ tên</label>
+            <input
+              value={form.parent_name}
+              onChange={set('parent_name')}
+              placeholder="Nguyễn Văn B"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Số điện thoại</label>
+            <input
+              value={form.parent_phone}
+              onChange={set('parent_phone')}
+              placeholder="0901234567"
+              className={inputClass}
+            />
+          </div>
         </div>
       </div>
+
+      <hr className="border-line" />
+
+      {/* Học phí riêng (tuỳ chọn) */}
+      <div className="space-y-4">
+        <p className="text-xs font-bold uppercase tracking-widest text-ink-400">Học phí riêng <span className="normal-case font-normal text-ink-300">(bỏ trống = dùng mặc định)</span></p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>Bán trú/tháng (đ)</label>
+            <input
+              type="number"
+              value={form.banTru_monthly_fee}
+              onChange={set('banTru_monthly_fee')}
+              placeholder="3.000.000"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Can thiệp/buổi (đ)</label>
+            <input
+              type="number"
+              value={form.canThiep_fee_per_session}
+              onChange={set('canThiep_fee_per_session')}
+              placeholder="150.000"
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
+
+      <hr className="border-line" />
+
+      {/* Ghi chú */}
       <div>
-        <Label className="text-ink-900 font-semibold text-sm">Ghi chú</Label>
-        <Textarea value={form.notes} onChange={set('notes')}
-          className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
+        <label className={labelClass}>Ghi chú</label>
+        <textarea
+          value={form.notes}
+          onChange={set('notes')}
+          rows={3}
+          placeholder="Lưu ý đặc biệt, tình trạng sức khoẻ..."
+          className={`${inputClass} resize-none`}
+        />
       </div>
-      <Button type="submit" disabled={loading}
-        className="w-full bg-sky-500 hover:bg-sky-700 text-white rounded-pill font-semibold shadow-sky transition-all hover:-translate-y-px">
-        {loading ? 'Đang lưu...' : student ? 'Cập nhật' : 'Thêm học sinh'}
+
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-coral-400 hover:bg-coral-500 text-white rounded-pill font-semibold py-3 shadow-coral transition-all hover:-translate-y-px disabled:opacity-60"
+      >
+        {loading ? 'Đang lưu...' : student ? '✓ Cập nhật học sinh' : '+ Thêm học sinh'}
       </Button>
     </form>
   )
