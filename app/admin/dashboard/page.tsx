@@ -15,7 +15,6 @@ export default async function DashboardPage() {
   const [
     { count: presentToday },
     { count: totalStudents },
-    { data: fees },
     { count: totalTeachers },
   ] = await Promise.all([
     supabase
@@ -24,12 +23,18 @@ export default async function DashboardPage() {
       .eq('schedules.date', today)
       .eq('student_present', true),
     supabase.from('students').select('*', { count: 'exact', head: true }).eq('active', true),
-    supabase.from('fees').select('total_amount, paid').eq('month', currentMonth),
     supabase.from('teachers').select('*', { count: 'exact', head: true }).eq('active', true),
   ])
 
-  const totalFees = (fees ?? []).reduce((s, f) => s + f.total_amount, 0)
-  const collectedFees = (fees ?? []).filter(f => f.paid).reduce((s, f) => s + f.total_amount, 0)
+  const { data: fees } = await supabase
+    .from('fees')
+    .select('total_amount, paid')
+    .eq('month', currentMonth)
+
+  type FeeSummary = { total_amount: number; paid: boolean }
+  const feeList = (fees ?? []) as FeeSummary[]
+  const totalFees = feeList.reduce((s, f) => s + f.total_amount, 0)
+  const collectedFees = feeList.filter(f => f.paid).reduce((s, f) => s + f.total_amount, 0)
   const uncollected = totalFees - collectedFees
 
   return (
