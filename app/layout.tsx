@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Bitter, Be_Vietnam_Pro } from 'next/font/google'
 import './globals.css'
 
@@ -21,7 +21,12 @@ export const metadata: Metadata = {
   description: 'Hệ thống quản lý trung tâm can thiệp sớm Open Sky',
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Open Sky' },
-  viewport: { width: 'device-width', initialScale: 1, maximumScale: 1 },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

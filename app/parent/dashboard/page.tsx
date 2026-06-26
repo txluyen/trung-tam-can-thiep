@@ -36,9 +36,11 @@ export default async function ParentDashboard() {
   const studentId = role.student_id
   const currentMonth = getCurrentMonth()
 
-  const [{ data: student }, { data: fee }, { data: reports }, { data: goals }] = await Promise.all([
-    supabase.from('students').select('*').eq('id', studentId).single(),
-    supabase.from('fees').select('*').eq('student_id', studentId).eq('month', currentMonth).maybeSingle(),
+  const { data: student } = await supabase
+    .from('students').select('*').eq('id', studentId).single()
+  const { data: fee } = await supabase
+    .from('fees').select('*').eq('student_id', studentId).eq('month', currentMonth).maybeSingle()
+  const [{ data: reports }, { data: goals }] = await Promise.all([
     supabase.from('progress_reports').select('*')
       .eq('student_id', studentId)
       .order('date', { ascending: false })

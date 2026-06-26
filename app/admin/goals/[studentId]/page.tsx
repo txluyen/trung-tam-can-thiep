@@ -4,11 +4,11 @@ import { notFound } from 'next/navigation'
 
 export default async function GoalsPage({ params }: { params: { studentId: string } }) {
   const supabase = createClient()
-  const [{ data: student }, { data: goals }] = await Promise.all([
-    supabase.from('students').select('full_name').eq('id', params.studentId).single(),
-    supabase.from('goals').select('*').eq('student_id', params.studentId).order('created_at'),
-  ])
+  const { data: student } = await supabase
+    .from('students').select('full_name').eq('id', params.studentId).single()
   if (!student) notFound()
+  const { data: goals } = await supabase
+    .from('goals').select('*').eq('student_id', params.studentId).order('created_at')
   return (
     <GoalList
       goals={goals ?? []}
