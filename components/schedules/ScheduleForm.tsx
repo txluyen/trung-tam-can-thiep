@@ -2,9 +2,6 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Student, Teacher } from '@/types/database'
 
 interface Props {
@@ -14,8 +11,12 @@ interface Props {
   onSuccess: () => void
 }
 
+const SESSION_TYPES = [
+  { value: 'canThiep', label: 'Can thiệp', activeClass: 'bg-pastel-blush border-coral-300 text-coral-700' },
+  { value: 'banTru', label: 'Bán trú', activeClass: 'bg-pastel-blue border-sky-400 text-sky-700' },
+]
+
 export function ScheduleForm({ students, teachers, defaultDate, onSuccess }: Props) {
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     date: defaultDate ?? new Date().toISOString().slice(0, 10),
@@ -30,6 +31,7 @@ export function ScheduleForm({ students, teachers, defaultDate, onSuccess }: Pro
     e.preventDefault()
     if (!form.student_id || !form.teacher_id) return
     setLoading(true)
+    const supabase = createClient()
     await supabase.from('schedules').insert({
       date: form.date,
       student_id: form.student_id,
@@ -43,65 +45,117 @@ export function ScheduleForm({ students, teachers, defaultDate, onSuccess }: Pro
     onSuccess()
   }
 
+  const inputClass = "mt-1.5 w-full rounded-[12px] border-[1.5px] border-[#DEDEE2] px-3 py-2.5 text-sm text-ink-900 bg-white focus:outline-none focus:border-sky-400 transition-colors"
+  const labelClass = "block text-sm font-semibold text-ink-700"
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
+
+      {/* Ngày */}
       <div>
-        <Label className="text-ink-900 font-semibold text-sm">Ngày *</Label>
-        <Input type="date" value={form.date}
-          onChange={e => setForm(f => ({ ...f, date: e.target.value }))} required
-          className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
+        <label className={labelClass}>Ngày <span className="text-coral-500">*</span></label>
+        <input
+          type="date"
+          value={form.date}
+          onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+          required
+          className={inputClass}
+        />
       </div>
+
+      <hr className="border-line" />
+
+      {/* Loại ca — toggle */}
       <div>
-        <Label className="text-ink-900 font-semibold text-sm">Học sinh *</Label>
-        <Select value={form.student_id} onValueChange={v => setForm(f => ({ ...f, student_id: v }))}>
-          <SelectTrigger className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2]">
-            <SelectValue placeholder="Chọn học sinh" />
-          </SelectTrigger>
-          <SelectContent>
-            {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="text-ink-900 font-semibold text-sm">Giáo viên *</Label>
-        <Select value={form.teacher_id} onValueChange={v => setForm(f => ({ ...f, teacher_id: v }))}>
-          <SelectTrigger className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2]">
-            <SelectValue placeholder="Chọn giáo viên" />
-          </SelectTrigger>
-          <SelectContent>
-            {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="text-ink-900 font-semibold text-sm">Loại ca *</Label>
-        <Select value={form.session_type} onValueChange={v => setForm(f => ({ ...f, session_type: v }))}>
-          <SelectTrigger className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="banTru">Bán trú</SelectItem>
-            <SelectItem value="canThiep">Can thiệp</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="text-ink-900 font-semibold text-sm">Giờ bắt đầu</Label>
-          <Input type="time" value={form.start_time}
-            onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))}
-            className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
-        </div>
-        <div>
-          <Label className="text-ink-900 font-semibold text-sm">Giờ kết thúc</Label>
-          <Input type="time" value={form.end_time}
-            onChange={e => setForm(f => ({ ...f, end_time: e.target.value }))}
-            className="mt-1 rounded-[12px] border-[1.5px] border-[#DEDEE2] focus:border-sky-500" />
+        <label className={labelClass}>Loại ca <span className="text-coral-500">*</span></label>
+        <div className="mt-1.5 flex gap-3">
+          {SESSION_TYPES.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setForm(f => ({ ...f, session_type: opt.value }))}
+              className={`flex-1 py-2.5 rounded-[12px] text-sm font-semibold border-[1.5px] transition-all ${
+                form.session_type === opt.value
+                  ? opt.activeClass
+                  : 'bg-white border-[#DEDEE2] text-ink-400 hover:border-sky-300'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
-      <Button type="submit" disabled={loading || !form.student_id || !form.teacher_id}
-        className="w-full bg-sky-500 hover:bg-sky-700 text-white rounded-pill font-semibold shadow-sky transition-all hover:-translate-y-px">
-        {loading ? 'Đang lưu...' : 'Tạo ca học'}
+
+      <hr className="border-line" />
+
+      {/* Học sinh & Giáo viên */}
+      <div className="space-y-4">
+        <p className="text-xs font-bold uppercase tracking-widest text-ink-400">Người tham gia</p>
+
+        <div>
+          <label className={labelClass}>Học sinh <span className="text-coral-500">*</span></label>
+          <select
+            value={form.student_id}
+            onChange={e => setForm(f => ({ ...f, student_id: e.target.value }))}
+            required
+            className={inputClass}
+          >
+            <option value="">— Chọn học sinh —</option>
+            {students.map(s => (
+              <option key={s.id} value={s.id}>{s.full_name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className={labelClass}>Giáo viên <span className="text-coral-500">*</span></label>
+          <select
+            value={form.teacher_id}
+            onChange={e => setForm(f => ({ ...f, teacher_id: e.target.value }))}
+            required
+            className={inputClass}
+          >
+            <option value="">— Chọn giáo viên —</option>
+            {teachers.map(t => (
+              <option key={t.id} value={t.id}>{t.full_name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <hr className="border-line" />
+
+      {/* Giờ */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-3">Thời gian</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>Bắt đầu</label>
+            <input
+              type="time"
+              value={form.start_time}
+              onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Kết thúc</label>
+            <input
+              type="time"
+              value={form.end_time}
+              onChange={e => setForm(f => ({ ...f, end_time: e.target.value }))}
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
+
+      <Button
+        type="submit"
+        disabled={loading || !form.student_id || !form.teacher_id}
+        className="w-full bg-coral-400 hover:bg-coral-500 text-white rounded-pill font-semibold py-3 shadow-coral transition-all hover:-translate-y-px disabled:opacity-60"
+      >
+        {loading ? 'Đang lưu...' : '+ Tạo ca học'}
       </Button>
     </form>
   )
